@@ -48,6 +48,7 @@ type ComponentWorldlyInterface interface {
 	SetScale(w, h float64)
 	GetAngle() float64
 	SetAngle(angle float64)
+	GetBoundingBox() (x, y, w, h float64)
 }
 
 func NewComponentWorldly(parent ActorInterface, x, y, w, h, angle float64) (ComponentWorldlyInterface, error) {
@@ -81,4 +82,8 @@ func (c *ComponentWorldly) GetAngle() float64 {
 
 func (c *ComponentWorldly) SetAngle(angle float64) {
 	c.angle = angle
+}
+
+func (c *ComponentWorldly) GetBoundingBox() (x, y, w, h float64) {
+	return c.x, c.y, c.w, c.h
 }

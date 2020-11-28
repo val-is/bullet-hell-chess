@@ -1,5 +1,7 @@
 package engine
 
+import "fmt"
+
 const (
 	PieceSpriteWidth  = 18.0
 	PieceSpriteHeight = 18.0
@@ -240,6 +242,16 @@ func NewActorChessPiece(parentScene SceneInterface, color BoardSide, pieceType C
 		return nil, err
 	}
 	actor.components = append(actor.components, pieceComp)
+
+	clickableComp, err := NewComponentClickable(&actor)
+	if err != nil {
+		return nil, err
+	}
+	clickableComp.AddStateListener(MouseStatePressed, func() error {
+		fmt.Println(string(color) + " " + string(pieceType))
+		return nil
+	})
+	actor.components = append(actor.components, clickableComp)
 
 	return &actor, nil
 }

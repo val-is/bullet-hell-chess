@@ -84,12 +84,16 @@ type ComponentDrawable struct {
 	Component
 	sprite      SpriteInterface
 	renderLayer RenderLayer
+	active      bool
 }
 
 type ComponentDrawableInterface interface {
 	ComponentInterface
 	Draw(screen *ebiten.Image, renderLayer RenderLayer) error
 	GetRenderLayer() RenderLayer
+
+	GetActive() bool
+	SetActive(active bool)
 }
 
 func NewComponentDrawable(parent ActorInterface, sprite SpriteInterface, renderLayer RenderLayer) (ComponentDrawableInterface, error) {
@@ -99,11 +103,15 @@ func NewComponentDrawable(parent ActorInterface, sprite SpriteInterface, renderL
 		},
 		sprite:      sprite,
 		renderLayer: renderLayer,
+		active:      true,
 	}
 	return &component, nil
 }
 
 func (c *ComponentDrawable) Draw(screen *ebiten.Image, renderLayer RenderLayer) error {
+	if !c.active {
+		return nil
+	}
 	if c.renderLayer != renderLayer {
 		return nil
 	}
@@ -117,6 +125,14 @@ func (c *ComponentDrawable) Draw(screen *ebiten.Image, renderLayer RenderLayer) 
 
 func (c *ComponentDrawable) GetRenderLayer() RenderLayer {
 	return c.renderLayer
+}
+
+func (c *ComponentDrawable) GetActive() bool {
+	return c.active
+}
+
+func (c *ComponentDrawable) SetActive(active bool) {
+	c.active = active
 }
 
 const ActorTypeBackgroundImage = "actor-background-image"
