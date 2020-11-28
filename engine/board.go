@@ -63,3 +63,17 @@ func AlgebraicToNative(row, column int) BoardSquare {
 func NativeToAlgebraic(square BoardSquare) (row, column int) {
 	return square[0] + 1, 8 - square[1]
 }
+
+// get drawing coordinates for pieces/markers/anything to be centered in a square
+func GetBoardDrawingCoords(square BoardSquare, w, h float64) (x, y float64) {
+	boardX := BoardConversionFactor*BoardPixelBorder + (ScreenWidth-BoardWidth)/2.0
+	boardY := BoardConversionFactor*BoardPixelBorder + (ScreenHeight-BoardHeight)/2.0
+
+	paddingX := (BoardCellWidth - w) / 2.0
+	paddingY := (BoardCellHeight - h) / 2.0
+
+	cellPosX := BoardCellWidth * float64(square[0])
+	cellPosY := BoardCellHeight * float64(square[1])
+
+	return boardX + paddingX + cellPosX, boardY + paddingY + cellPosY
+}

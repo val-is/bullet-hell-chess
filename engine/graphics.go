@@ -91,7 +91,7 @@ type ComponentDrawableInterface interface {
 	ComponentInterface
 	Draw(screen *ebiten.Image, renderLayer RenderLayer) error
 	GetRenderLayer() RenderLayer
-
+	CheckIfDrawable(renderLayer RenderLayer) bool
 	GetActive() bool
 	SetActive(active bool)
 }
@@ -109,10 +109,7 @@ func NewComponentDrawable(parent ActorInterface, sprite SpriteInterface, renderL
 }
 
 func (c *ComponentDrawable) Draw(screen *ebiten.Image, renderLayer RenderLayer) error {
-	if !c.active {
-		return nil
-	}
-	if c.renderLayer != renderLayer {
+	if !c.CheckIfDrawable(renderLayer) {
 		return nil
 	}
 	wComp, err := c.parentActor.GetComponent(ComponentTypeWorldly)
@@ -125,6 +122,16 @@ func (c *ComponentDrawable) Draw(screen *ebiten.Image, renderLayer RenderLayer) 
 
 func (c *ComponentDrawable) GetRenderLayer() RenderLayer {
 	return c.renderLayer
+}
+
+func (c *ComponentDrawable) CheckIfDrawable(renderLayer RenderLayer) bool {
+	if !c.GetActive() {
+		return false
+	}
+	if c.GetRenderLayer() != renderLayer {
+		return false
+	}
+	return true
 }
 
 func (c *ComponentDrawable) GetActive() bool {

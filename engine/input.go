@@ -63,9 +63,6 @@ func (c *ComponentClickable) AddHoverListener(listener ClickListener) {
 }
 
 func (c *ComponentClickable) MousePressed(x, y int) error {
-	if !c.mouseHover {
-		return nil
-	}
 	c.mouseState = MouseStatePressed
 	for _, mouseListener := range c.mouseStateListeners[MouseStatePressed] {
 		if err := mouseListener(); err != nil {
@@ -76,9 +73,6 @@ func (c *ComponentClickable) MousePressed(x, y int) error {
 }
 
 func (c *ComponentClickable) MouseReleased(x, y int) error {
-	if !c.mouseHover {
-		return nil
-	}
 	c.mouseState = MouseStateReleased
 	for _, mouseListener := range c.mouseStateListeners[MouseStateReleased] {
 		if err := mouseListener(); err != nil {
@@ -120,7 +114,7 @@ func (c *ComponentClickable) Update() error {
 		return err
 	}
 
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) && c.mouseHover {
 		if err := c.MousePressed(mx, my); err != nil {
 			return err
 		}

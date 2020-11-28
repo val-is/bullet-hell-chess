@@ -1,6 +1,8 @@
 package engine
 
-import "fmt"
+import (
+	"github.com/hajimehoshi/ebiten"
+)
 
 const (
 	PieceSpriteWidth  = 18.0
@@ -8,6 +10,12 @@ const (
 
 	PieceWidth  = PieceSpriteWidth * BoardConversionFactor
 	PieceHeight = PieceSpriteHeight * BoardConversionFactor
+
+	MarkerSpriteWidth  = 12.0
+	MarkerSpriteHeight = 12.0
+
+	MarkerWidth  = MarkerSpriteWidth * BoardConversionFactor
+	MarkerHeight = MarkerSpriteHeight * BoardConversionFactor
 )
 
 type BoardSide string
@@ -30,6 +38,7 @@ const (
 
 type BoardSquare [2]int
 
+// component defining chess piece characteristics
 const ComponentTypeChessPiece = "component-chess-piece"
 
 type ComponentChessPiece struct {
@@ -102,14 +111,14 @@ func (c *ComponentChessPiece) GetAvailableMoves() []BoardSquare {
 	pos := c.position
 	switch c.pieceType {
 	case PiecePawn:
-		if c.color == BoardSideWhite {
+		if c.color == BoardSideBlack {
 			availMoves = append(availMoves,
 				BoardSquare{pos[0], pos[1] + 1},
 				BoardSquare{pos[0], pos[1] + 2},
 				BoardSquare{pos[0] - 1, pos[1] + 1},
 				BoardSquare{pos[0] + 1, pos[1] + 1},
 			)
-		} else if c.color == BoardSideBlack {
+		} else if c.color == BoardSideWhite {
 			availMoves = append(availMoves,
 				BoardSquare{pos[0], pos[1] - 1},
 				BoardSquare{pos[0], pos[1] - 2},
@@ -195,8 +204,7 @@ func (c *ComponentChessPiece) LockToGrid() error {
 	}
 	// see board.go for math
 	worldlyComp.(*ComponentWorldly).SetPosition(
-		BoardPieceOffsetX+BoardCellPaddingWidth+BoardCellWidth*float64(c.position[0]),
-		BoardPieceOffsetY+BoardCellPaddingHeight+BoardCellHeight*float64(c.position[1]),
+		GetBoardDrawingCoords(c.position, PieceWidth, PieceHeight),
 	)
 	return nil
 }
@@ -204,6 +212,45 @@ func (c *ComponentChessPiece) LockToGrid() error {
 func (c *ComponentChessPiece) Update() error {
 	if err := c.LockToGrid(); err != nil {
 		return err
+	}
+	return nil
+}
+
+// drawable component for chess piece markers
+type ComponentChessPieceMoveMarker struct {
+	ComponentDrawable
+}
+
+type ComponentChessPieceMoveMarkerInterface interface {
+	ComponentDrawableInterface
+}
+
+func NewComponentChessPieceMoveMarker(parent ActorInterface, sprite SpriteInterface, renderLayer RenderLayer) (ComponentChessPieceMoveMarkerInterface, error) {
+	drawable, err := NewComponentDrawable(parent, sprite, renderLayer)
+	if err != nil {
+		return nil, err
+	}
+	drawableComp := drawable.(*ComponentDrawable)
+	component := ComponentChessPieceMoveMarker{
+		ComponentDrawable: *drawableComp,
+	}
+	return &component, nil
+}
+
+func (c *ComponentChessPieceMoveMarker) Draw(screen *ebiten.Image, renderLayer RenderLayer) error {
+	if !c.CheckIfDrawable(renderLayer) {
+		return nil
+	}
+	chessComp, err := c.parentActor.GetComponent(ComponentTypeChessPiece)
+	if err != nil {
+		return err
+	}
+	moves := chessComp.(ComponentChessPieceInterface).GetAvailableMoves()
+	for _, square := range moves {
+		drawX, drawY := GetBoardDrawingCoords(square, MarkerWidth, MarkerHeight)
+		if err := c.sprite.Draw(screen, drawX, drawY, MarkerWidth, MarkerHeight, 0); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -231,6 +278,17 @@ func NewActorChessPiece(parentScene SceneInterface, color BoardSide, pieceType C
 	}
 	actor.components = append(actor.components, spriteComp)
 
+	markerSprite, err := NewBasicSpriteFromPath("assets/sprites/marker.png")
+	if err != nil {
+		return nil, err
+	}
+	markerSpriteComp, err := NewComponentChessPieceMoveMarker(&actor, markerSprite, RenderLayerUI)
+	if err != nil {
+		return nil, err
+	}
+	markerSpriteComp.SetActive(false)
+	actor.components = append(actor.components, markerSpriteComp)
+
 	worldly, err := NewComponentWorldly(&actor, 0, 0, PieceWidth, PieceHeight, 0)
 	if err != nil {
 		return nil, err
@@ -248,7 +306,11 @@ func NewActorChessPiece(parentScene SceneInterface, color BoardSide, pieceType C
 		return nil, err
 	}
 	clickableComp.AddStateListener(MouseStatePressed, func() error {
-		fmt.Println(string(color) + " " + string(pieceType))
+		markerSpriteComp.SetActive(true)
+		return nil
+	})
+	clickableComp.AddStateListener(MouseStateReleased, func() error {
+		markerSpriteComp.SetActive(false)
 		return nil
 	})
 	actor.components = append(actor.components, clickableComp)

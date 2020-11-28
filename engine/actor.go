@@ -33,7 +33,7 @@ func (a *Actor) Update() error {
 func (a *Actor) Draw(screen *ebiten.Image, renderLayer RenderLayer) error {
 	for k := range a.components {
 		if a.components[k].GetComponentType() == ComponentTypeDrawable {
-			if err := a.components[k].(*ComponentDrawable).Draw(screen, renderLayer); err != nil {
+			if err := a.components[k].(ComponentDrawableInterface).Draw(screen, renderLayer); err != nil {
 				return err
 			}
 		}
