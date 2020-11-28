@@ -50,7 +50,14 @@ func (s *SceneMachine) Update() error {
 }
 
 func (s *SceneMachine) Draw(screen *ebiten.Image) error {
-	return s.activeScene.Draw(screen)
+	for _, layer := range []RenderLayer{
+		RenderLayerBackground, RenderLayerForeground,
+		RenderLayerForegroundObject, RenderLayerUI} {
+		if err := s.activeScene.Draw(screen, layer); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *SceneMachine) GetCurrentScene() SceneInterface {
@@ -68,7 +75,7 @@ type Scene struct {
 
 type SceneInterface interface {
 	Update() error
-	Draw(screen *ebiten.Image) error
+	Draw(screen *ebiten.Image, renderLayer RenderLayer) error
 	GetActorsType(actorType string) []ActorInterface
 	GetActorId(actorId string) (ActorInterface, error)
 	AddActor(actor ActorInterface)
@@ -92,9 +99,9 @@ func (s *Scene) Update() error {
 	return nil
 }
 
-func (s *Scene) Draw(screen *ebiten.Image) error {
+func (s *Scene) Draw(screen *ebiten.Image, renderLayer RenderLayer) error {
 	for k := range s.actors {
-		if err := s.actors[k].Draw(screen); err != nil {
+		if err := s.actors[k].Draw(screen, renderLayer); err != nil {
 			return err
 		}
 	}

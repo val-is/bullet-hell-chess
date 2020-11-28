@@ -15,7 +15,7 @@ type Actor struct {
 
 type ActorInterface interface {
 	Update() error
-	Draw(screen *ebiten.Image) error
+	Draw(screen *ebiten.Image, renderLayer RenderLayer) error
 	GetComponent(componentType string) (ComponentInterface, error)
 	GetActorType() string
 	GetId() string
@@ -30,10 +30,10 @@ func (a *Actor) Update() error {
 	return nil
 }
 
-func (a *Actor) Draw(screen *ebiten.Image) error {
+func (a *Actor) Draw(screen *ebiten.Image, renderLayer RenderLayer) error {
 	for k := range a.components {
 		if a.components[k].GetComponentType() == ComponentTypeDrawable {
-			if err := a.components[k].(*ComponentDrawable).Draw(screen); err != nil {
+			if err := a.components[k].(*ComponentDrawable).Draw(screen, renderLayer); err != nil {
 				return err
 			}
 		}

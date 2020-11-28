@@ -1,9 +1,5 @@
 package engine
 
-import (
-	"github.com/hajimehoshi/ebiten"
-)
-
 // BASE COMPONENTS
 
 // basic component, nothing special
@@ -85,38 +81,4 @@ func (c *ComponentWorldly) GetAngle() float64 {
 
 func (c *ComponentWorldly) SetAngle(angle float64) {
 	c.angle = angle
-}
-
-// GRAPHICAL COMPONENTS
-
-// generic component that's drawable
-const ComponentTypeDrawable = "component-drawable"
-
-type ComponentDrawable struct {
-	Component
-	sprite SpriteInterface
-}
-
-type ComponentDrawableInterface interface {
-	ComponentInterface
-	Draw(screen *ebiten.Image) error
-}
-
-func NewComponentDrawable(parent ActorInterface, sprite SpriteInterface) (ComponentDrawableInterface, error) {
-	component := ComponentDrawable{
-		Component: Component{
-			parent, ComponentTypeDrawable,
-		},
-		sprite: sprite,
-	}
-	return &component, nil
-}
-
-func (c *ComponentDrawable) Draw(screen *ebiten.Image) error {
-	wComp, err := c.parentActor.GetComponent(ComponentTypeWorldly)
-	if err != nil {
-		return err
-	}
-	w := wComp.(*ComponentWorldly)
-	return c.sprite.Draw(screen, w.x, w.y, w.w, w.h, w.angle)
 }

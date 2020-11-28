@@ -13,6 +13,15 @@ const (
 	ScreenHeight = 700
 )
 
+type RenderLayer int
+
+const (
+	RenderLayerBackground       RenderLayer = iota
+	RenderLayerUI               RenderLayer = iota
+	RenderLayerForeground       RenderLayer = iota
+	RenderLayerForegroundObject RenderLayer = iota
+)
+
 func LoadImageFromFile(filename string) (*ebiten.Image, error) {
 	imgReader, err := ebitenutil.OpenFile(filename)
 	if err != nil {
@@ -68,6 +77,48 @@ func (s *BasicSprite) GetSize() (float64, float64) {
 	return s.w, s.h
 }
 
+// generic component that's drawable
+const ComponentTypeDrawable = "component-drawable"
+
+type ComponentDrawable struct {
+	Component
+	sprite      SpriteInterface
+	renderLayer RenderLayer
+}
+
+type ComponentDrawableInterface interface {
+	ComponentInterface
+	Draw(screen *ebiten.Image, renderLayer RenderLayer) error
+	GetRenderLayer() RenderLayer
+}
+
+func NewComponentDrawable(parent ActorInterface, sprite SpriteInterface, renderLayer RenderLayer) (ComponentDrawableInterface, error) {
+	component := ComponentDrawable{
+		Component: Component{
+			parent, ComponentTypeDrawable,
+		},
+		sprite:      sprite,
+		renderLayer: renderLayer,
+	}
+	return &component, nil
+}
+
+func (c *ComponentDrawable) Draw(screen *ebiten.Image, renderLayer RenderLayer) error {
+	if c.renderLayer != renderLayer {
+		return nil
+	}
+	wComp, err := c.parentActor.GetComponent(ComponentTypeWorldly)
+	if err != nil {
+		return err
+	}
+	w := wComp.(*ComponentWorldly)
+	return c.sprite.Draw(screen, w.x, w.y, w.w, w.h, w.angle)
+}
+
+func (c *ComponentDrawable) GetRenderLayer() RenderLayer {
+	return c.renderLayer
+}
+
 const ActorTypeBackgroundImage = "actor-background-image"
 
 func NewActorBackgroundImage(parentScene SceneInterface, id, filename string) (ActorInterface, error) {
@@ -82,7 +133,7 @@ func NewActorBackgroundImage(parentScene SceneInterface, id, filename string) (A
 	if err != nil {
 		return nil, err
 	}
-	spriteComp, err := NewComponentDrawable(&actor, sprite)
+	spriteComp, err := NewComponentDrawable(&actor, sprite, RenderLayerBackground)
 	if err != nil {
 		return nil, err
 	}
